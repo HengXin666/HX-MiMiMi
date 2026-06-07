@@ -6,10 +6,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-nonexistent:
     runs-on: ubuntu-latest
     steps:
-      - name: Test simple PASSWORD secret
+      - name: Test non-existent secret
+        env:
+          FAKE_SECRET: ${{ secrets.NONEXISTENT_SECRET }}
+        run: echo "FAKE length: ${#FAKE_SECRET}"
+
+  test-existing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test existing PASSWORD secret
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-        run: echo "PASSWORD length: ${#RELEASE_KEYSTORE_PASSWORD}"
+        run: echo "REAL length: ${#RELEASE_KEYSTORE_PASSWORD}"
