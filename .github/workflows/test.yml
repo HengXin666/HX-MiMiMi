@@ -9,4 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello, no secrets"
+      - name: Test simple PASSWORD secret
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: echo "PASSWORD length: ${#RELEASE_KEYSTORE_PASSWORD}"
