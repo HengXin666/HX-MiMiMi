@@ -9,10 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test all secrets
+      - name: Test with FAKE secret
         env:
-          S_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-          S_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          S_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          S_KEYPASS: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: echo "All secrets work (lengths: ${#S_BASE64}, ${#S_PASSWORD}, ${#S_ALIAS}, ${#S_KEYPASS})"
+          FAKE: ${{ secrets.FAKE_SECRET_12345 }}
+        run: echo "FAKE secret: [$FAKE]"
