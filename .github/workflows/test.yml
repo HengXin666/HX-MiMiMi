@@ -6,10 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-password:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test PASSWORD secret
-        env:
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-        run: echo "PASSWORD length: ${#RELEASE_KEYSTORE_PASSWORD}"
+      - run: echo "Hello, no secrets"
