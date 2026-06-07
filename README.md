@@ -31,4 +31,4 @@ Android 的系统限制：如果用户在系统设置里对应用执行“强行
 ./gradlew test assembleRelease
 ```
 
-当前 release 工作流未配置签名密钥，产物是 unsigned APK。正式发布时应在 GitHub Secrets 中加入 keystore，并在 workflow 中启用签名步骤。
+release 工作流会从 GitHub Secrets 解码 release keystore 并输出 signed APK。需要保管好本地 `.secrets/` 备份；丢失 keystore 后，已安装用户将无法直接更新到后续版本。

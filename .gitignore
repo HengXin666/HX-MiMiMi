@@ -1,5 +1,6 @@
 .gradle/
 .ai-cli/
+.secrets/
 build/
 */build/
 local.properties
