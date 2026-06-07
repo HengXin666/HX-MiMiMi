@@ -1,4 +1,4 @@
-name: Test Secrets
+name: Test Expressions
 
 on:
   push:
@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test with FAKE secret
+      - name: Test expression (not secret)
         env:
-          FAKE: ${{ secrets.FAKE_SECRET_12345 }}
-        run: echo "FAKE secret: [$FAKE]"
+          TEST_VAR: ${{ github.workspace }}
+        run: echo "Workspace: $TEST_VAR"
