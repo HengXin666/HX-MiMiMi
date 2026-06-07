@@ -6,14 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-base64:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test BASE64 secret
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-        run: echo "BASE64 length: ${#RELEASE_KEYSTORE_BASE64}"
-
   test-password:
     runs-on: ubuntu-latest
     steps:
@@ -21,11 +13,3 @@ jobs:
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
         run: echo "PASSWORD length: ${#RELEASE_KEYSTORE_PASSWORD}"
-
-  test-alias:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test ALIAS secret
-        env:
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-        run: echo "ALIAS: $RELEASE_KEY_ALIAS"
