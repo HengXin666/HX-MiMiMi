@@ -1,0 +1,47 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: ./gradlew --no-daemon clean test assembleRelease
+
+      - name: Rename artifact
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release-unsigned.apk dist/HX-MiMiMi-release-unsigned.apk
+
+      - name: Publish rolling release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: rolling-release
+          name: HX MiMiMi Rolling Release
+          artifacts: dist/HX-MiMiMi-release-unsigned.apk
+          allowUpdates: true
+          replacesArtifacts: true
+          removeArtifacts: true
+          body: |
+            自动构建发布，不需要手动创建 tag。
+            APK 当前未配置签名密钥，产物为 unsigned release APK。
