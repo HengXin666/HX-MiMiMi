@@ -5,8 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Hello, GitHub Actions!"
+      - name: Test secret access
+        env:
+          TEST: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        run: echo "Secret length: ${#TEST}"
