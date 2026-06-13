@@ -18,6 +18,9 @@ data class Alarm(
     val repeatDays: Set<DayOfWeek> = emptySet(),
     val ringtoneUri: String? = null,
     val snoozeGuardMinutes: Int = 8,
+    val dismissMovementScore: Float = 80f,
+    val awakeMovementScore: Float = 120f,
+    val awakeConfirmSeconds: Int = 20,
     val welcomeMessage: String = "起床先喝杯水吧",
     val nextAt: LocalDateTime? = null,
 )

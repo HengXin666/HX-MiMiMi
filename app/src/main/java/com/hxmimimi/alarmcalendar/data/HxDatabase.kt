@@ -33,6 +33,9 @@ class HxDatabase(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB
                 repeat_days TEXT NOT NULL,
                 ringtone_uri TEXT,
                 snooze_guard_minutes INTEGER NOT NULL,
+                dismiss_movement_score REAL NOT NULL DEFAULT 80,
+                awake_movement_score REAL NOT NULL DEFAULT 120,
+                awake_confirm_seconds INTEGER NOT NULL DEFAULT 20,
                 welcome_message TEXT NOT NULL,
                 next_at TEXT
             )
@@ -74,7 +77,9 @@ class HxDatabase(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
-            // 预留迁移入口；正式升级时保留用户闹钟与日历数据。
+            db.execSQL("ALTER TABLE alarms ADD COLUMN dismiss_movement_score REAL NOT NULL DEFAULT 80")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN awake_movement_score REAL NOT NULL DEFAULT 120")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN awake_confirm_seconds INTEGER NOT NULL DEFAULT 20")
         }
     }
 
@@ -82,7 +87,7 @@ class HxDatabase(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB
 
     companion object {
         const val DB_NAME = "hx_mimimi.db"
-        private const val DB_VERSION = 1
+        private const val DB_VERSION = 2
     }
 }
 
@@ -110,6 +115,9 @@ class AlarmRepository(private val db: HxDatabase) {
             put("repeat_days", alarm.repeatDays.toDbDays())
             put("ringtone_uri", alarm.ringtoneUri)
             put("snooze_guard_minutes", alarm.snoozeGuardMinutes)
+            put("dismiss_movement_score", alarm.dismissMovementScore)
+            put("awake_movement_score", alarm.awakeMovementScore)
+            put("awake_confirm_seconds", alarm.awakeConfirmSeconds)
             put("welcome_message", alarm.welcomeMessage)
             put("next_at", alarm.nextAt?.toDb())
         }
@@ -160,6 +168,9 @@ class EventRepository(private val db: HxDatabase) {
         }
     }
 
+    fun byId(id: Long): CalendarEvent? = db.readableDatabase.query("events", null, "id=?", arrayOf(id.toString()), null, null, null)
+        .useRows { it.toEvent() }.firstOrNull()
+
     fun delete(id: Long) {
         db.writableDatabase.delete("events", "id=?", arrayOf(id.toString()))
     }
@@ -198,7 +209,7 @@ class ExportRepository(private val context: Context, private val db: HxDatabase)
 
     fun exportJson(): String {
         val alarms = AlarmRepository(db).alarms().joinToString(prefix = "[", postfix = "]") {
-            """{"id":${it.id},"title":"${it.title.escapeJson()}","hour":${it.hour},"minute":${it.minute},"enabled":${it.enabled},"repeatKind":"${it.repeatKind}","repeatDays":"${it.repeatDays.toDbDays()}","ringtoneUri":${it.ringtoneUri.jsonOrNull()},"snoozeGuardMinutes":${it.snoozeGuardMinutes},"welcomeMessage":"${it.welcomeMessage.escapeJson()}"}"""
+            """{"id":${it.id},"title":"${it.title.escapeJson()}","hour":${it.hour},"minute":${it.minute},"enabled":${it.enabled},"repeatKind":"${it.repeatKind}","repeatDays":"${it.repeatDays.toDbDays()}","ringtoneUri":${it.ringtoneUri.jsonOrNull()},"snoozeGuardMinutes":${it.snoozeGuardMinutes},"dismissMovementScore":${it.dismissMovementScore},"awakeMovementScore":${it.awakeMovementScore},"awakeConfirmSeconds":${it.awakeConfirmSeconds},"welcomeMessage":"${it.welcomeMessage.escapeJson()}"}"""
         }
         val events = EventRepository(db).events().joinToString(prefix = "[", postfix = "]") {
             """{"id":${it.id},"title":"${it.title.escapeJson()}","description":"${it.description.escapeJson()}","kind":"${it.kind}","date":"${it.date}","allDay":${it.allDay},"showInNotification":${it.showInNotification},"showOnLockScreen":${it.showOnLockScreen},"remindDaysBefore":${it.remindDaysBefore},"repeatKind":"${it.repeatKind}","repeatValue":${it.repeatValue},"completed":${it.completed}}"""
@@ -217,6 +228,9 @@ private fun Cursor.toAlarm() = Alarm(
     repeatDays = getString(getColumnIndexOrThrow("repeat_days")).toDaySet(),
     ringtoneUri = getStringOrNull("ringtone_uri"),
     snoozeGuardMinutes = getInt(getColumnIndexOrThrow("snooze_guard_minutes")),
+    dismissMovementScore = getFloatOrDefault("dismiss_movement_score", 80f),
+    awakeMovementScore = getFloatOrDefault("awake_movement_score", 120f),
+    awakeConfirmSeconds = getIntOrDefault("awake_confirm_seconds", 20),
     welcomeMessage = getString(getColumnIndexOrThrow("welcome_message")),
     nextAt = getStringOrNull("next_at")?.toLocalDateTimeOrNull(),
 )
@@ -262,6 +276,16 @@ private fun Cursor.getStringOrNull(column: String): String? {
 private fun Cursor.getIntOrNull(column: String): Int? {
     val index = getColumnIndexOrThrow(column)
     return if (isNull(index)) null else getInt(index)
+}
+
+private fun Cursor.getIntOrDefault(column: String, defaultValue: Int): Int {
+    val index = getColumnIndex(column)
+    return if (index == -1 || isNull(index)) defaultValue else getInt(index)
+}
+
+private fun Cursor.getFloatOrDefault(column: String, defaultValue: Float): Float {
+    val index = getColumnIndex(column)
+    return if (index == -1 || isNull(index)) defaultValue else getFloat(index)
 }
 
 private fun Cursor.getLongOrNull(column: String): Long? {

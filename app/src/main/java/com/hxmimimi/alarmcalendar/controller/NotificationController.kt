@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.hxmimimi.alarmcalendar.MainActivity
 import com.hxmimimi.alarmcalendar.R
 import com.hxmimimi.alarmcalendar.receiver.AlarmReceiver
+import com.hxmimimi.alarmcalendar.service.AlarmRingService
 import com.hxmimimi.alarmcalendar.view.AlarmRingActivity
 
 class NotificationController(private val context: Context) {
@@ -35,15 +36,24 @@ class NotificationController(private val context: Context) {
             Intent(context, AlarmRingActivity::class.java).putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        val guardedDismiss = PendingIntent.getService(
+            context,
+            (alarmId + 200_000).toInt(),
+            Intent(context, AlarmRingService::class.java)
+                .setAction(AlarmRingService.ACTION_DISMISS)
+                .putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarmId),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         return NotificationCompat.Builder(context, CHANNEL_ALARM)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification_alarm)
             .setContentTitle(title)
-            .setContentText("闹钟正在响铃")
+            .setContentText("起身活动后才能关闭")
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setFullScreenIntent(fullScreen, true)
+            .addAction(R.drawable.ic_notification_alarm, "尝试关闭", guardedDismiss)
             .build()
     }
 
@@ -55,7 +65,7 @@ class NotificationController(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         manager.notify((20_000 + eventId).toInt(), NotificationCompat.Builder(context, CHANNEL_EVENT)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification_alarm)
             .setContentTitle("日历提醒")
             .setContentText(title)
             .setContentIntent(content)
@@ -67,7 +77,7 @@ class NotificationController(private val context: Context) {
 
     fun showStatus(id: Int, title: String, text: String) {
         manager.notify(id, NotificationCompat.Builder(context, CHANNEL_STATUS)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification_alarm)
             .setContentTitle(title)
             .setContentText(text)
             .setAutoCancel(true)
